@@ -10,7 +10,10 @@ export const getNews = createAsyncThunk(
 
 const newsSlice = createSlice({
   name: "news",
-  initialState: { articles: [], status: "idle" },
+  initialState: {
+    articles: [],  
+    status: "idle",
+  },
   reducers: {},
   extraReducers: (builder) => {
     builder
@@ -18,7 +21,9 @@ const newsSlice = createSlice({
         state.status = "loading";
       })
       .addCase(getNews.fulfilled, (state, action) => {
-        state.articles = action.payload;
+        if (state.articles.length === 0) { // Prevent clearing articles
+          state.articles = action.payload;
+        }
         state.status = "succeeded";
       })
       .addCase(getNews.rejected, (state) => {

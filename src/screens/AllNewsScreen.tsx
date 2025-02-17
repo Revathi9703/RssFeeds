@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { 
   View, FlatList, ActivityIndicator, StyleSheet, Text, Alert, PermissionsAndroid, Platform 
 } from "react-native";
@@ -11,20 +11,26 @@ import WeatherCard from "../components/WeatherCard";
 import NewsCard from "../components/NewsCard";
 import NewsSliderCard from "../components/NewsSliderCard"; 
 import { check, request, PERMISSIONS, RESULTS } from "react-native-permissions";
+import { useFocusEffect } from "@react-navigation/native";
 
 const AllNewsScreen = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { articles, status } = useSelector((state: RootState) => state.news);
-  const { data: weather, status: weatherStatus } = useSelector((state: RootState) => state.weather);
+  const { data: weather } = useSelector((state: RootState) => state.weather);
   const { temperatureUnit } = useSelector((state: RootState) => state.settings);
 
   const sliderRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
 
   useEffect(() => {
     requestLocationPermission();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(getNews("general"));  // Refetch general news when coming back
+    }, [dispatch])
+  );
 
   const requestLocationPermission = async () => {
     try {
@@ -55,9 +61,8 @@ const AllNewsScreen = () => {
     Geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        setLocation({ lat: latitude, lon: longitude });
         dispatch(getWeather({ lat: latitude, lon: longitude }));
-        dispatch(getNews("general")); // Fetch India news
+        dispatch(getNews("general")); 
       },
       (error) => {
         console.error("Location Error:", error);
